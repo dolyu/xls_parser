@@ -7,8 +7,17 @@ const sampleData = {
 };
 
 
+const dataParser = (data) => {
+  const jsonData = {};
+  ///asdfasdf^adfasdf^adfdsf^adfadsf를 ^로 나눠서 배열로 만들어줌
+  const dataArray = data.split('^');
+  return jsonData;
+}
+
+
 const saveXls = (data) => {
   // Create a new workbook
+  data = sampleData;
   console.log('ㅋㅋ', data);
   //
 
