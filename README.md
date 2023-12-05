@@ -1,3 +1,4 @@
+[![Node.js Package](https://github.com/dolyu/xls_parser/actions/workflows/npm-publish.yml/badge.svg)](https://github.com/dolyu/xls_parser/actions/workflows/npm-publish.yml)
 ### node version
 v16.14.2
 
