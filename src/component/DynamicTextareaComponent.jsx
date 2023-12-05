@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import "./DynamicTextareaComponent.css";
 const sampleData = `12074986
 49656481
@@ -26,6 +26,14 @@ const GridTextareaComponent = () => {
   const [inputs, setInputs] = useState([]);
   const textAreaRefs = useRef([]);
 
+  useEffect(() => {
+    // Retrieve data from localStorage on component mount
+    // const savedInputs = JSON.parse(localStorage.getItem("textareaInputs"));
+    // if (savedInputs) {
+    //   setInputs(savedInputs);
+    // }
+  }, []);
+
   const addInput = () => {
     const newIndex = inputs.length + 1;
     const newInput = (
@@ -34,6 +42,7 @@ const GridTextareaComponent = () => {
         <textarea
           ref={(ref) => (textAreaRefs.current[newIndex - 1] = ref)}
           placeholder={`Textarea No.${newIndex}`}
+          onChange={() => saveToLocalStorage()}
         />
       </div>
     );
@@ -44,14 +53,28 @@ const GridTextareaComponent = () => {
   const resetInputs = () => {
     setInputs([]);
     textAreaRefs.current = [];
+    // Clear localStorage on reset
+    localStorage.removeItem("textareaInputs");
   };
+
+  const saveToLocalStorage = () => {
+    const jsonInputs = textAreaRefs.current.map((textarea, index) => {
+      if (textarea == null) return;
+      return { [`${index + 1}`]: textarea.value };
+    });
+
+    localStorage.setItem("textareaInputs", JSON.stringify(jsonInputs));
+  };
+
   const addSampleData = () => {
     textAreaRefs.current.forEach((textarea, index) => {
       if (textarea) {
-        textarea.value = sampleData2;
+        textarea.value = sampleData;
+        saveToLocalStorage(); // Save after adding sample data
       }
     });
   };
+
   const getInputsAsJson = () => {
     console.log(textAreaRefs.current);
     const jsonInputs = textAreaRefs.current.map((textarea, index) => {

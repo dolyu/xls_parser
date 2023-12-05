@@ -51,7 +51,6 @@ async function createWindow() {
     });
     ipcMain.on('save-xls', (event, data) => {
       saveXls(data);
-
     })
 
     if (isDev) {

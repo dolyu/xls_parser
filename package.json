@@ -2,7 +2,7 @@
   "name": "xls_parser",
   "version": "0.1.0",
   "private": true,
-  "main": "public/main.js",
+  "main": "public/electron.js",
   "dependencies": {
     "@testing-library/jest-dom": "^5.14.1",
     "@testing-library/react": "^13.0.0",
@@ -29,6 +29,30 @@
       "react-app",
       "react-app/jest"
     ]
+  },
+  "build": {
+    "appId": "com.example.xlsParser",
+    "productName": "XLS Parser",
+    "files": [
+      "build/**/*",
+      "node_modules/**/*",
+      "src/lib/*"
+    ],
+    "extraFiles": [
+      "*.dll",
+      "*.lib"
+    ],
+    "directories": {
+      "output": "assets",
+      "buildResources": "assets"
+    },
+    "mac": {
+      "category": "your.app.category.type"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "/public/app_icon_512.ico"
+    }
   },
   "homepage": "./",
   "browserslist": {
