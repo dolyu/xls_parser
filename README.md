@@ -8,8 +8,8 @@ v16.14.2
 1.22.19
 
 ### Script
-yarn start
-yarn electron
+- yarn start
+- yarn electron
 
 ### Package
 yarn electron-pack
