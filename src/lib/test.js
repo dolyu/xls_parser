@@ -14,9 +14,7 @@ function generateTableData(data) {
 
   const QRData = dataArray[dataArray.length - 1];
   qrDataArray.push(...QRData.split("^"));
-
   const jsonTable = [];
-
 
   batchArray.forEach(([batch, qty, expirationDate]) => {
     console.log("qwfqwfqw", expirationDate);
@@ -65,3 +63,4 @@ const data = `12074986\n49656481\n
 
 const resultTable = generateTableData(data);
 console.table(resultTable);
+
