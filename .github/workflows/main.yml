@@ -1,0 +1,43 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - v*
+jobs:
+  build:
+
+    runs-on: ${{ windows-latest }}
+
+    strategy:
+      matrix:
+        os: [macOS-latest, windows-latest, ubuntu-latest]
+
+    steps:
+      - name: Context
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+        run: echo "$GITHUB_CONTEXT"
+      - uses: actions/checkout@v1
+        with:
+          fetch-depth: 1
+      - name: Use Node.js 16.x
+        uses: actions/setup-node@v1
+        with:
+          node-version: 16.x
+      - name: npm install -g yarn
+        run: |
+          npm install -g yarn
+      - name: yarn install
+        run: |
+          yarn install
+      - name: yarn electron-pack
+        run: |
+          yarn electron-pack
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: "dist/TistoryEditor*"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
