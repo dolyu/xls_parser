@@ -1,6 +1,7 @@
 const fs = require('fs');
 const ExcelJS = require('exceljs');
 const { dialog } = require('electron');
+const moment = require('moment');
 const sampleData = {
   name: "asdf",
   age: 11
@@ -23,7 +24,11 @@ const saveXls = (data) => {
   //
 
   // Show save file dialog
-  dialog.showSaveDialog({ defaultPath: 'QR.xlsx' }).then((result) => {
+  dialog.showSaveDialog({
+    defaultPath: 'QR.xlsx', filters: [
+      { name: 'Excel Files', extensions: ['xlsx'] }
+    ]
+  }).then((result) => {
     if (!result.canceled) {
       saveData(result.filePath, data);
     }
@@ -49,19 +54,21 @@ const saveData = (filePath, data) => {
   //   qrLineNo,
   //   batch,
   // Add data to the worksheet
-  worksheet.addRow(['No', 'Box No', 'Material No', 'Material Code', '배치', 'QTY', '유통기한', '생산일자', 'QR바코드', 'QR배치', 'QR라인번호', '배치']);
+  worksheet.addRow(['No', 'Box No', 'Material No', 'Shipment No', 'Material Code', '배치', 'QTY', 'Unit QTY', '유통기한', '생산일자', 'QR바코드', 'QR배치', 'QR라인번호', '배치']);
   worksheet.columns[1].width = 15;//Box No
   worksheet.columns[2].width = 15;//Material No
-  worksheet.columns[3].width = 15;//Material Code
-  worksheet.columns[4].width = 15;//배치
-  worksheet.columns[5].width = 15;//QTY
-  worksheet.columns[6].width = 15;//유통기한
+  worksheet.columns[3].width = 15;//Shipment No
+  worksheet.columns[4].width = 15;//Material Code
+  worksheet.columns[5].width = 15;//배치
+  worksheet.columns[6].width = 15;//QTY
+  worksheet.columns[7].width = 15;//Unit QTY
+  worksheet.columns[8].width = 15;//유통기한
 
-  worksheet.columns[7].width = 15;//생산일자
-  worksheet.columns[8].width = 25;//QR바코드
-  worksheet.columns[9].width = 15;//QR배치
-  worksheet.columns[10].width = 15;//QR라인번호
-  worksheet.columns[11].width = 15;//배치
+  worksheet.columns[9].width = 15;//생산일자
+  worksheet.columns[10].width = 25;//QR바코드
+  worksheet.columns[11].width = 15;//QR배치
+  worksheet.columns[12].width = 15;//QR라인번호
+  worksheet.columns[13].width = 15;//배치
   worksheet.eachRow((row) => {
     row.eachCell((cell) => {
       cell.numFmt = '@'; // '@'은 텍스트를 나타내는 서식 코드입니다.
@@ -79,20 +86,43 @@ const saveData = (filePath, data) => {
     const element = jsonData[i];
 
     //for (const e of element) {
+    const mergeCell = [];
     for (let j = 0; j < element.length; j++) {
       const e = element[j];
-      let dateParts = e.expirationDate.split('-').map(part => parseInt(part.trim(), 10));
-      let expiryDate = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
-
-      console.log(expiryDate, e.expirationDate);
+      const stringWithoutSpaces = e.expirationDate.replace(/\s/g, '');
+      expiryDate = new Date(stringWithoutSpaces);
       const productionDate = new Date(expiryDate);
       productionDate.setFullYear(expiryDate.getFullYear() - 1);
 
-      worksheet.addRow([i + 1, e.boxNo, e.materialNo, e.materialCode, e.batch, e.qty, expiryDate, productionDate, e.qrCode, e.qrBatch, e.qrLineNo, e.batch]);
-      const jdx = 2 + (i * 20);
+      const exp = moment(expiryDate).format('YYYY-MM-DD');
+      const prod = moment(productionDate).format('YYYY-MM-DD');
+
+      // console.log('date', a, b);
+      worksheet.addRow([i + 1, e.boxNo, e.materialNo, e.shipmentNo, e.materialCode, e.batch, e.qty, '1', exp, prod, e.qrCode, e.qrBatch, e.qrLineNo, e.batch]);
+
+      const jdx = 2 + (i * 20) + j;
       worksheet.getCell(`B${jdx}`).numFmt = '@';
+      const qty = e.qty;
+      mergeCell.push({ qty: qty, jdx: jdx });
+    }
+
+    const result = mergeCell.reduce((acc, item) => {
+      const qtyValue = item.qty;
+      if (!acc[qtyValue]) {
+        acc[qtyValue] = [];
+      }
+      acc[qtyValue].push(item);
+      return acc;
+    }, {});
+
+    for (const qty in result) {
+      const start = result[qty][0].jdx;
+      const end = result[qty][result[qty].length - 1].jdx;
+      worksheet.mergeCells(`G${start}:G${end}`);//QTY
+      worksheet.getCell(`G${start}`).alignment = { vertical: 'middle', horizontal: 'center' };
 
     }
+
     worksheet.mergeCells(`A${2 + (i * 20)}:A${21 + (i * 20)}`);
     worksheet.getCell(`A${2 + (i * 20)}`).alignment = { vertical: 'middle', horizontal: 'center' };
   }
@@ -106,33 +136,28 @@ const saveData = (filePath, data) => {
 }
 function convertToJSON(datas) {
   const ret = [];
-  console.log(datas)
   for (let itemIndex = 0; itemIndex < datas.length; itemIndex++) {
     const key = Object.keys(datas[itemIndex])[0];
     const dataArray = datas[itemIndex][key].split('\n').filter(value => value.trim() !== '');
     // console.log("wefwef", dataArray);
-    const [boxNo, materialNo, ...rest] = dataArray;
+    const [boxNo, materialNo, shipmentNo, ...rest] = dataArray;
 
     const batchArray = [];
     const qrDataArray = [];
     //console.log("reset", rest);
-    console.log("rest", rest.length);
     for (let i = 0; i < rest.length; i += 3) {
       if (rest[i].includes("^") || rest[i].includes("|")) {
         continue;
       }
-      console.log("rest", rest[i]);
       const batch = rest[i];
       const qty = rest[i + 1];
       const expirationDate = rest[i + 2];
       batchArray.push([batch, qty, expirationDate]);
     }
-    console.log("batch", batchArray);
     const QRData = dataArray[dataArray.length - 1];
     const tempArray = QRData.split("|");
     const materialCode = tempArray[0];
     qrDataArray.push(...tempArray[2].split("^"));
-
     const jsonTable = [];
     const jsonTable2 = [];
 
@@ -142,12 +167,21 @@ function convertToJSON(datas) {
       const qrLineNo = qrCode.slice(12, 15);
       const batch = qrBatch.substring(0, 1) + '0' + qrBatch.substring(1);
       const resultArray = batchArray.filter((item) => item[0] === batch);
-      console.log("resultArray", batch, resultArray);
-      const qty = resultArray[0][1];
-      const expirationDate = resultArray[0][2];
+
+      let qty;
+      let expirationDate;
+      try {
+        qty = resultArray[0][1];
+        expirationDate = resultArray[0][2];
+      }
+      catch (e) {
+        qty = 0;
+        expirationDate = "0";
+      }
       const jsonEntry = {
         boxNo,
         materialNo,
+        shipmentNo,
         materialCode,
         batch,
         qty,
@@ -194,10 +228,10 @@ const sd3 = [
 ];
 const sd4 = [
   {
-    "1": "TPBX20231122030\n12075262\nA095NBH013\n3\n2024 - 11 - 16\nA095NBH014\n17\n2024 - 11 - 16\nLA02- 00536A | 20 | jSZA95NBH0140073Y17VB ^ jSZA95NBH0140083Y17VB ^ jSZA95NBH0140093Y17VB ^ jSZA95NBH0140103Y17VB ^ jSZA95NBH0140113Y17VB ^ jSZA95NBH0140123Y17VB ^ jSZA95NBH0140133Y17VB ^ jSZA95NBH0140143Y17VB ^ jSZA95NBH0140153Y17VB ^ jSZA95NBH0140163Y17VB ^ jSZA95NBH0140173Y17VB ^ jSZA95NBH0140183Y17VB ^ jSZA95NBH0140193Y17VB ^ jSZA95NBH0140203Y17VB ^ jSZA95NBH0140213Y17VB ^ jSZA95NBH0140223Y17VB ^ jSZA95NBH0140233Y17VB ^ jSZA95NBH0130103Y17VB ^ jSZA95NBH0130123Y17VB ^ jSZA95NBH0130133Y17VB"
+    "1": "TPBX20231122030\n12075262\n49656481\nA095NBH013\n3\n2024/11/16\nA095NBH014\n17\n2024 - 11 - 16\nLA02- 00536A | 20 | jSZA95NBH0140073Y17VB ^ jSZA95NBH0140083Y17VB ^ jSZA95NBH0140093Y17VB ^ jSZA95NBH0140103Y17VB ^ jSZA95NBH0140113Y17VB ^ jSZA95NBH0140123Y17VB ^ jSZA95NBH0140133Y17VB ^ jSZA95NBH0140143Y17VB ^ jSZA95NBH0140153Y17VB ^ jSZA95NBH0140163Y17VB ^ jSZA95NBH0140173Y17VB ^ jSZA95NBH0140183Y17VB ^ jSZA95NBH0140193Y17VB ^ jSZA95NBH0140203Y17VB ^ jSZA95NBH0140213Y17VB ^ jSZA95NBH0140223Y17VB ^ jSZA95NBH0140233Y17VB ^ jSZA95NBH0130103Y17VB ^ jSZA95NBH0130123Y17VB ^ jSZA95NBH0130133Y17VB"
   },
   {
-    "2": "TPBX20231122030\n12075262\nA095NBH013\n3\n2024 - 11 - 16\nA095NBH014\n17\n2024 - 11 - 16\nLA02- 00536A | 20 | jSZA95NBH0140073Y17VB ^ jSZA95NBH0140083Y17VB ^ jSZA95NBH0140093Y17VB ^ jSZA95NBH0140103Y17VB ^ jSZA95NBH0140113Y17VB ^ jSZA95NBH0140123Y17VB ^ jSZA95NBH0140133Y17VB ^ jSZA95NBH0140143Y17VB ^ jSZA95NBH0140153Y17VB ^ jSZA95NBH0140163Y17VB ^ jSZA95NBH0140173Y17VB ^ jSZA95NBH0140183Y17VB ^ jSZA95NBH0140193Y17VB ^ jSZA95NBH0140203Y17VB ^ jSZA95NBH0140213Y17VB ^ jSZA95NBH0140223Y17VB ^ jSZA95NBH0140233Y17VB ^ jSZA95NBH0130103Y17VB ^ jSZA95NBH0130123Y17VB ^ jSZA95NBH0130133Y17VB"
+    "2": "TPBX20231122030\n12075262\n49656481\nA095NBH013\n3\n2024/11/16\nA095NBH014\n17\n2024 - 11 - 16\nLA02- 00536A | 20 | jSZA95NBH0140073Y17VB ^ jSZA95NBH0140083Y17VB ^ jSZA95NBH0140093Y17VB ^ jSZA95NBH0140103Y17VB ^ jSZA95NBH0140113Y17VB ^ jSZA95NBH0140123Y17VB ^ jSZA95NBH0140133Y17VB ^ jSZA95NBH0140143Y17VB ^ jSZA95NBH0140153Y17VB ^ jSZA95NBH0140163Y17VB ^ jSZA95NBH0140173Y17VB ^ jSZA95NBH0140183Y17VB ^ jSZA95NBH0140193Y17VB ^ jSZA95NBH0140203Y17VB ^ jSZA95NBH0140213Y17VB ^ jSZA95NBH0140223Y17VB ^ jSZA95NBH0140233Y17VB ^ jSZA95NBH0130103Y17VB ^ jSZA95NBH0130123Y17VB ^ jSZA95NBH0130133Y17VB"
   }
 ]
 

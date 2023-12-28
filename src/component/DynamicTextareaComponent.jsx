@@ -24,25 +24,19 @@ LB02-00128A|20|jBRA00N381750253308B^jBRA00N381750433308B^jBRA00N381750243308B^jB
 `;
 const sampleData3 = `TPBX20231122030
 12075262
+49656481
 A095NBH013
 3
-2024-11-16
+2024/11/20
 A095NBH014
 17
-2024-11-16
+2024/11/20
 LA02-00536A|20|jSZA95NBH0140073Y17VB^jSZA95NBH0140083Y17VB^jSZA95NBH0140093Y17VB^jSZA95NBH0140103Y17VB^jSZA95NBH0140113Y17VB^jSZA95NBH0140123Y17VB^jSZA95NBH0140133Y17VB^jSZA95NBH0140143Y17VB^jSZA95NBH0140153Y17VB^jSZA95NBH0140163Y17VB^jSZA95NBH0140173Y17VB^jSZA95NBH0140183Y17VB^jSZA95NBH0140193Y17VB^jSZA95NBH0140203Y17VB^jSZA95NBH0140213Y17VB^jSZA95NBH0140223Y17VB^jSZA95NBH0140233Y17VB^jSZA95NBH0130103Y17VB^jSZA95NBH0130123Y17VB^jSZA95NBH0130133Y17VB
 `;
 const GridTextareaComponent = () => {
   const [inputs, setInputs] = useState([]);
+  const [showButton, setShowButton] = useState(false);
   const textAreaRefs = useRef([]);
-
-  useEffect(() => {
-    // Retrieve data from localStorage on component mount
-    // const savedInputs = JSON.parse(localStorage.getItem("textareaInputs"));
-    // if (savedInputs) {
-    //   setInputs(savedInputs);
-    // }
-  }, []);
 
   const addInput = () => {
     const newIndex = inputs.length + 1;
@@ -51,8 +45,9 @@ const GridTextareaComponent = () => {
         <label>{newIndex}</label>
         <textarea
           ref={(ref) => (textAreaRefs.current[newIndex - 1] = ref)}
-          placeholder={`Textarea No.${newIndex}`}
+          placeholder={`QR No.${newIndex}`}
           onChange={() => saveToLocalStorage()}
+          // onKeyDown={(e) => handleKeyDown(e, newIndex)}
         />
       </div>
     );
@@ -65,8 +60,28 @@ const GridTextareaComponent = () => {
     textAreaRefs.current = [];
     // Clear localStorage on reset
     localStorage.removeItem("textareaInputs");
+
+    // getInputsAsJson();
+    setInputs([]);
+    textAreaRefs.current = [];
   };
 
+  // const handleKeyDown = (event, index) => {
+  //   if (event.key === "Enter") {
+  //     event.preventDefault();
+  //     focusNextTextarea(index);
+  //   }
+  // };
+
+  // const focusNextTextarea = (currentIndex) => {
+  //   const nextIndex = currentIndex;
+  //   if (textAreaRefs.current[nextIndex]) {
+  //     textAreaRefs.current[nextIndex].focus();
+  //   } else {
+  //     // If the current textarea is the last one, wrap to the first one
+  //     textAreaRefs.current[0].focus();
+  //   }
+  // };
   const saveToLocalStorage = () => {
     const jsonInputs = textAreaRefs.current.map((textarea, index) => {
       if (textarea == null) return;
@@ -86,8 +101,17 @@ const GridTextareaComponent = () => {
   };
 
   const getInputsAsJson = () => {
-    console.log(textAreaRefs.current);
+    // console.log(
+    //   "textAreaRefs.current",
+    //   textAreaRefs.current,
+    //   textAreaRefs.current.length
+    // );
+
+    console.log("textAreaRefs.current", textAreaRefs.current);
+    textAreaRefs.current = textAreaRefs.current.filter((item) => item !== null);
+
     const jsonInputs = textAreaRefs.current.map((textarea, index) => {
+      console.log("textarea", textarea, index);
       if (textarea == null) return;
       return { [`${index + 1}`]: textarea.value };
     });
@@ -97,12 +121,39 @@ const GridTextareaComponent = () => {
     window.icheonlib.saveXls(jsonInputs);
   };
 
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      // event.ctrlKey는 Ctrl 키가 눌렸는지 확인합니다.
+      // event.keyCode는 눌린 키의 키코드를 나타냅니다. 49은 숫자 1의 키코드입니다.
+      if (event.ctrlKey && event.keyCode === 49) {
+        setShowButton(true);
+      }
+    };
+
+    const handleKeyUp = (event) => {
+      // Ctrl 키가 떼어지면 버튼을 숨깁니다.
+      if (!event.ctrlKey) {
+        setShowButton(false);
+      }
+    };
+
+    // 이벤트 리스너 등록
+    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("keyup", handleKeyUp);
+
+    // 컴포넌트가 언마운트되면 이벤트 리스너 해제
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("keyup", handleKeyUp);
+    };
+  }, []);
+
   return (
     <div className="grid-textarea-component">
       <button onClick={addInput}>+</button>
       <button onClick={resetInputs}>Reset</button>
-      <button onClick={getInputsAsJson}>save excel</button>
-      <button onClick={addSampleData}>Add Sample Data</button>
+      <button onClick={getInputsAsJson}>Save Excel</button>
+      {showButton && <button onClick={addSampleData}>Add Sample Data</button>}
 
       <div className="grid-container">{inputs}</div>
     </div>
