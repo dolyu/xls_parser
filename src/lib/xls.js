@@ -92,10 +92,11 @@ const saveData = (filePath, data) => {
       const stringWithoutSpaces = e.expirationDate.replace(/\s/g, '');
       expiryDate = new Date(stringWithoutSpaces);
       const productionDate = new Date(expiryDate);
-      productionDate.setFullYear(expiryDate.getFullYear() - 1);
+      productionDate.setFullYear(productionDate.getFullYear() - 1);
+      productionDate.setDate(productionDate.getDate() + 1);
 
-      const exp = moment(expiryDate).format('YYYY-MM-DD');
-      const prod = moment(productionDate).format('YYYY-MM-DD');
+      const exp = moment(expiryDate).format('YYYYMMDD');
+      const prod = moment(productionDate).format('YYYYMMDD');
 
       // console.log('date', a, b);
       worksheet.addRow([i + 1, e.boxNo, e.materialNo, e.shipmentNo, e.materialCode, e.batch, e.qty, '1', exp, prod, e.qrCode, e.qrBatch, e.qrLineNo, e.batch]);
