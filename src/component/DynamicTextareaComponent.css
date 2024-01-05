@@ -17,7 +17,18 @@
 label {
   margin-right: 8px;
 }
+.button-container {
+  display: flex;
+  justify-content: start;
+  align-items: center;
+  gap: 8px;
+}
 
+.result {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
 textarea {
   flex: 1;
   height: 15rem;

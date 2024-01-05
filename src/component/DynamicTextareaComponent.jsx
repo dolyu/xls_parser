@@ -37,6 +37,8 @@ const GridTextareaComponent = () => {
   const [inputs, setInputs] = useState([]);
   const [showButton, setShowButton] = useState(false);
   const textAreaRefs = useRef([]);
+  const [result, setResult] = useState([]);
+  const [resultStyle, setResultStyle] = useState({});
 
   const addInput = () => {
     const newIndex = inputs.length + 1;
@@ -100,7 +102,7 @@ const GridTextareaComponent = () => {
     });
   };
 
-  const getInputsAsJson = () => {
+  const getInputsAsJson = async () => {
     // console.log(
     //   "textAreaRefs.current",
     //   textAreaRefs.current,
@@ -118,7 +120,35 @@ const GridTextareaComponent = () => {
 
     console.log(JSON.stringify(jsonInputs, null, 2));
     console.log(jsonInputs);
-    window.icheonlib.saveXls(jsonInputs);
+    const rt = await window.icheonlib.saveXls(jsonInputs);
+    console.log("rt", rt);
+    if (rt.result == "success") {
+      if (rt.message == "cancel") {
+        setResult("저장취소");
+        setResultStyle({});
+      } else {
+        setResult("저장성공");
+        setResultStyle({ color: "white", backgroundColor: "skyblue" });
+      }
+
+      for (let i = 0; i < textAreaRefs.current.length; i++) {
+        const textarea = textAreaRefs.current[i];
+        if (textarea) {
+          textarea.style.border = "";
+        }
+      }
+    } else {
+      setResult(`저장실패: (${rt.id}) ${rt.message}`);
+      setResultStyle({ color: "white", backgroundColor: "red" });
+
+      if (rt.id >= 0) {
+        const textarea = textAreaRefs.current[rt.id];
+        // textarea 스타일 변경
+        if (textarea) {
+          textarea.style.border = "3px solid red";
+        }
+      }
+    }
   };
 
   useEffect(() => {
@@ -150,11 +180,14 @@ const GridTextareaComponent = () => {
 
   return (
     <div className="grid-textarea-component">
-      <button onClick={addInput}>+</button>
-      <button onClick={resetInputs}>Reset</button>
-      <button onClick={getInputsAsJson}>Save Excel</button>
-      {showButton && <button onClick={addSampleData}>Add Sample Data</button>}
-
+      <div class="button-container">
+        <button onClick={addInput}>+</button>
+        <button onClick={resetInputs}>Reset</button>
+        <button onClick={getInputsAsJson}>Save Excel</button>
+        {showButton && <button onClick={addSampleData}>Add Sample Data</button>}
+        {result && <div style={resultStyle}>{result}</div>}
+      </div>
+      <br></br>
       <div className="grid-container">{inputs}</div>
     </div>
   );

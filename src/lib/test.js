@@ -46,7 +46,7 @@ function generateTableData(data) {
 }
 
 // 테스트를 위해 호출
-const data = `12074986\n49656481\n
+const data = `12074986\n49656481\ndfsdfsedfs\n
     A049N7B622\n
     4\n
     2023/11/01\n

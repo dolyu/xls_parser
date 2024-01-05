@@ -49,9 +49,6 @@ async function createWindow() {
 
       event.reply("files", { files: result });
     });
-    ipcMain.on('save-xls', (event, data) => {
-      saveXls(data);
-    })
 
     if (isDev) {
       console.log('dev', __dirname);
@@ -123,5 +120,11 @@ app.on('activate', () => {
     console.error('activate', error.message);
   }
 });
+
+ipcMain.handle('save-xls', async (event, data) => {
+  const rt = await saveXls(data);
+  console.log('save-xls', rt);
+  return rt;
+})
 
 
