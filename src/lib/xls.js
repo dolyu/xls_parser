@@ -99,7 +99,7 @@ const saveData = async (filePath, data) => {
       for (let j = 0; j < element.length; j++) {
         const e = element[j];
         const stringWithoutSpaces = e.expirationDate.replace(/\s/g, '');
-        expiryDate = new Date(stringWithoutSpaces);
+        const expiryDate = new Date(stringWithoutSpaces);
         const productionDate = new Date(expiryDate);
         productionDate.setFullYear(productionDate.getFullYear() - 1);
         productionDate.setDate(productionDate.getDate() + 1);
@@ -115,24 +115,26 @@ const saveData = async (filePath, data) => {
         const qty = e.qty;
         mergeCell.push({ qty: qty, jdx: jdx });
       }
+      console.log('mergeCell', mergeCell);
+      let curqty = mergeCell[0].qty;
+      let startjdx = mergeCell[0].jdx;
+      let groups = [];
 
-      const result = mergeCell.reduce((acc, item) => {
-        const qtyValue = item.qty;
-        if (!acc[qtyValue]) {
-          acc[qtyValue] = [];
+      for (let i = 1; i < mergeCell.length; i++) {
+        if (mergeCell[i].qty !== curqty) {
+          groups.push({ qty: curqty, startjdx: startjdx, endjdx: mergeCell[i - 1].jdx });
+          curqty = mergeCell[i].qty;
+          startjdx = mergeCell[i].jdx;
         }
-        acc[qtyValue].push(item);
-        return acc;
-      }, {});
-
-      for (const qty in result) {
-        const start = result[qty][0].jdx;
-        const end = result[qty][result[qty].length - 1].jdx;
-        worksheet.mergeCells(`G${start}:G${end}`);//QTY
-        worksheet.getCell(`G${start}`).alignment = { vertical: 'middle', horizontal: 'center' };
-
+      }
+      // 마지막 그룹 추가
+      groups.push({ qty: curqty, startjdx: startjdx, endjdx: mergeCell[mergeCell.length - 1].jdx });
+      for (const group of groups) {
+        worksheet.mergeCells(`G${group.startjdx}:G${group.endjdx}`);
+        worksheet.getCell(`G${group.startjdx}`).alignment = { vertical: 'middle', horizontal: 'center' };
       }
 
+      console.log('sadfsadf', groups);
       worksheet.mergeCells(`A${2 + (i * 20)}:A${21 + (i * 20)}`);
       worksheet.getCell(`A${2 + (i * 20)}`).alignment = { vertical: 'middle', horizontal: 'center' };
     }
@@ -286,8 +288,32 @@ const sd4 = [
   }
 ]
 
+const sd5 = [
+  {
+    "1": `SB0000891308
+12019982
+50612924
+A049NCF229
+1
+12/14/2024
+A049NCL561
+2
+12/20/2024
+A049NCL562
+10
+12/20/2024
+A049NCL563
+1
+12/20/2024
+A049NCL564
+6
+12/20/2024
+LB02-00135A|20|jCTA49NCF2290133Z15YB^jCTA49NCL5610203Z21YB^jCTA49NCL5610193Z21YB^jCTA49NCL5620063Z21YB^jCTA49NCL5620073Z21YB^jCTA49NCL5620043Z21YB^jCTA49NCL5620053Z21YB^jCTA49NCL5620023Z21YB^jCTA49NCL5620033Z21YB^jCTA49NCL5620013Z21YB^jCTA49NCL5620083Z21YB^jCTA49NCL5620093Z21YB^jCTA49NCL5620103Z21YB^jCTA49NCL5630223Z21YB^jCTA49NCL5640093Z21YB^jCTA49NCL5640063Z21YB^jCTA49NCL5640053Z21YB^jCTA49NCL5640123Z21YB^jCTA49NCL5640153Z21YB^jCTA49NCL5640113Z21YB
+`
+  }
+]
 async function test() {
-  const rt = await saveData('2.xlsx', sd4)
+  const rt = await saveData('2.xlsx', sd5)
   console.log(rt);
 }
 test();
