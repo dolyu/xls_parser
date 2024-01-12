@@ -115,7 +115,7 @@ const saveData = async (filePath, data) => {
         const qty = e.qty;
         mergeCell.push({ qty: qty, jdx: jdx });
       }
-      console.log('mergeCell', mergeCell);
+      // console.log('mergeCell', mergeCell);
       let curqty = mergeCell[0].qty;
       let startjdx = mergeCell[0].jdx;
       let groups = [];
@@ -185,16 +185,20 @@ function convertToJSON(datas) {
       const materialCode = tempArray[0];
       qrDataArray.push(...tempArray[2].split("^"));
       const jsonTable = [];
-      const jsonTable2 = [];
+      // console.log("result ", rest, qrDataArray.length, batchArray);
+
       for (let index = 0; index < qrDataArray.length; index++) {
         // qrDataArray.forEach((value, index) => {
         const value = qrDataArray[index];
         const qrCode = value.trim();
         const qrBatch = qrCode.slice(3, 12);
         const qrLineNo = qrCode.slice(12, 15);
-        const batch = qrBatch.substring(0, 1) + '0' + qrBatch.substring(1);
-        const resultArray = batchArray.filter((item) => item[0] === batch);
-
+        const batch = '0' + qrBatch.substring(1);
+        const f = qrBatch.substring(1);
+        const resultArray = batchArray.filter((item) => item[0].includes(f));
+        // console.log("resultArray", index, resultArray, batch, f, batchArray);
+        // console.log("resultArray", index, resultArray, batchArray, batch, qrBatch, qrLineNo, qrCode)
+        // console.log("resultArray", qrBatch, batch);
         let qty;
         let expirationDate;
         try {
@@ -233,9 +237,8 @@ function convertToJSON(datas) {
           qty,
           expirationDate,
           qrCode,
-          qrBatch,
+          qrBatch: qrBatch.substring(1),
           qrLineNo,
-          batch,
         };
         jsonTable.push(jsonEntry);
       }
@@ -291,15 +294,15 @@ const sd4 = [
 const sd5 = [
   {
     "1": `SB0000891308
-12019982
-50612924
+yy019982
+yy612924
 A049NCF229
 1
 12/14/2024
 A049NCL561
 2
 12/20/2024
-A049NCL562
+yy49NCL562
 10
 12/20/2024
 A049NCL563
@@ -312,8 +315,22 @@ LB02-00135A|20|jCTA49NCF2290133Z15YB^jCTA49NCL5610203Z21YB^jCTA49NCL5610193Z21YB
 `
   }
 ]
+const sd6 = [
+  {
+    "1": `SB0000837326
+12084849
+50414780
+YY00N69271
+20
+06/08/2024
+LB02-00128A|20|jBRA00N692711083609YB^jBRA00N692710523609YB^jBRA00N692710533609YB^jBRA00N692710553609YB^jBRA00N692710563609YB^jBRA00N692710573609YB^jBRA00N692710583609YB^jBRA00N692710593609YB^jBRA00N692710603609YB^jBRA00N692710613609YB^jBRA00N692710783609YB^jBRA00N692710813609YB^jBRA00N692710803609YB^jBRA00N692710823609YB^jBRA00N692710833609YB^jBRA00N692710843609YB^jBRA00N692710873609YB^jBRA00N692710863609YB^jBRA00N692710493609YB^jBRA00N692710503609YB
+
+`
+  }
+]
+
 async function test() {
-  const rt = await saveData('2.xlsx', sd5)
+  const rt = await saveData('2.xlsx', sd6)
   console.log(rt);
 }
 test();

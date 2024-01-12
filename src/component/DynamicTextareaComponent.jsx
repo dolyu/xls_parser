@@ -138,7 +138,7 @@ const GridTextareaComponent = () => {
         }
       }
     } else {
-      setResult(`저장실패: (${rt.id}) ${rt.message}`);
+      setResult(`저장실패: (${rt.id + 1}) ${rt.message}`);
       setResultStyle({ color: "white", backgroundColor: "red" });
 
       if (rt.id >= 0) {
