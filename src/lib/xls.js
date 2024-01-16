@@ -193,19 +193,22 @@ function convertToJSON(datas) {
         const qrCode = value.trim();
         const qrBatch = qrCode.slice(3, 12);
         const qrLineNo = qrCode.slice(12, 15);
-        const batch = '0' + qrBatch.substring(1);
+        // const batch = '0' + qrBatch.substring(1);
         const f = qrBatch.substring(1);
         const resultArray = batchArray.filter((item) => item[0].includes(f));
-        // console.log("resultArray", index, resultArray, batch, f, batchArray);
+        console.log("resultArray", index, resultArray, f, batchArray);
         // console.log("resultArray", index, resultArray, batchArray, batch, qrBatch, qrLineNo, qrCode)
         // console.log("resultArray", qrBatch, batch);
         let qty;
         let expirationDate;
+        let batch;
         try {
+          batch = resultArray[0][0];
           qty = resultArray[0][1];
           expirationDate = resultArray[0][2];
         }
         catch (e) {
+          batch = '';
           qty = 0;
           expirationDate = "0";
           return {
